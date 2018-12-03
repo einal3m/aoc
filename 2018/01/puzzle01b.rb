@@ -1,4 +1,4 @@
-class Puzzle02
+class Puzzle01b
 	class << self
 	  def do_it(input)
 	  	frequency = 0
