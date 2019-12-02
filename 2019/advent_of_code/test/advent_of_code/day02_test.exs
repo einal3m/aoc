@@ -19,7 +19,7 @@ defmodule AdventOfCode.Day02Test do
 
     test "problem" do
       IO.puts "--------------------"
-      IO.puts "Answer to Puzzle 01a"
+      IO.puts "Answer to Puzzle 02a"
       IO.inspect Day02.part_one(@input, 12, 2)
       IO.puts "--------------------"
     end
@@ -30,7 +30,7 @@ defmodule AdventOfCode.Day02Test do
       {noun, verb} = Day02.part_two(@input, 19690720)
 
       IO.puts "--------------------"
-      IO.puts "Answer to Puzzle 02a"
+      IO.puts "Answer to Puzzle 02b"
       IO.puts Integer.to_string(100 * noun + verb)
       IO.puts "--------------------"
     end
