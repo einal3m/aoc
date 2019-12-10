@@ -17,7 +17,7 @@ defmodule AdventOfCode.IntCode do
     |> run
   end
 
-  def run(%IntCode{instructions: input, index: index, params: param, outputs: outputs, relative_base: relative_base}) do
+  def run(state = %IntCode{instructions: input, index: index, params: param, outputs: outputs, relative_base: relative_base}) do
     {code, modes} = parse_code(Map.get(input, index))
     
     case code do
@@ -75,7 +75,7 @@ defmodule AdventOfCode.IntCode do
         run(input, index + 2, param, outputs, relative_base + param1)
 
       99 ->
-        outputs
+        state
     end
   end
 
