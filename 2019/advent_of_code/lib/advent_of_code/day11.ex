@@ -1,9 +1,9 @@
 defmodule AdventOfCode.Day11 do
-  def part_one(codes) do
-    codes = AdventOfCode.IntCode.initialize_instructions(codes)
+  def part_one(instructions) do
+    int_code = AdventOfCode.IntCode.initialize_int_code(instructions)
 
     state = %AdventOfCode.IntCode{
-      instructions: codes, 
+      int_code: int_code, 
       index: 0, 
       relative_base: 0, 
       status: :running
@@ -13,11 +13,11 @@ defmodule AdventOfCode.Day11 do
     |> Enum.count(fn {_point, colours} -> length(colours) end)
   end
 
-  def part_two(codes) do
-    codes = AdventOfCode.IntCode.initialize_instructions(codes)
+  def part_two(instructions) do
+    int_code = AdventOfCode.IntCode.initialize_int_code(instructions)
 
     state = %AdventOfCode.IntCode{
-      instructions: codes, 
+      int_code: int_code, 
       index: 0, 
       relative_base: 0, 
       status: :running
