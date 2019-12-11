@@ -46,11 +46,6 @@ defmodule AdventOfCode.IntCode do
     end
   end
 
-  def run(input, index, param, outputs, relative_base, status) do
-    %IntCode{instructions: input, index: index, params: param, outputs: outputs, relative_base: relative_base, status: status}
-    |> run()
-  end
-
   def run(state = %IntCode{instructions: input, index: index, params: param, outputs: outputs, relative_base: relative_base, status: status}) do
     {code, modes} = parse_code(Map.get(input, index))
     
@@ -58,20 +53,27 @@ defmodule AdventOfCode.IntCode do
       1 -> # a + b => c
         {param1, param2, param3} = get_val_val_pos(input, index, modes, relative_base)
 
-        Map.put(input, param3, param1 + param2)
-        |> run(index + 4, param, outputs, relative_base, status)
+        state
+        |> Map.put(:instructions, Map.put(input, param3, param1 + param2))
+        |> Map.put(:index, index + 4)
+        |> run()
 
       2 -> # a * b => c
         {param1, param2, param3} = get_val_val_pos(input, index, modes, relative_base)
 
-        Map.put(input, param3, param1 * param2)
-        |> run(index + 4, param, outputs, relative_base, status)
+        state
+        |> Map.put(:instructions, Map.put(input, param3, param1 * param2))
+        |> Map.put(:index, index + 4)
+        |> run()
 
       3 -> # input => a
         param1 = get_pos(input, index, modes, relative_base)
 
-        Map.put(input, param1, hd(param))
-        |> run(index + 2, tl(param), outputs, relative_base, status)
+        state
+        |> Map.put(:instructions, Map.put(input, param1, hd(param)))
+        |> Map.put(:params, tl(param))
+        |> Map.put(:index, index + 2)
+        |> run()
 
       4 -> # output => a
         param1 = get_val(input, index, modes, relative_base)
@@ -84,32 +86,43 @@ defmodule AdventOfCode.IntCode do
         {param1, param2} = get_val_val(input, index, modes, relative_base)
         new_index = if param1 != 0, do: param2, else: index + 3
 
-        run(input, new_index, param, outputs, relative_base, status)
+        state
+        |> Map.put(:index, new_index)
+        |> run()
 
       6 -> # jump if false
         {param1, param2} = get_val_val(input, index, modes, relative_base)
         new_index = if param1 == 0, do: param2, else: index + 3
 
-        run(input, new_index, param, outputs, relative_base, status)
+        state
+        |> Map.put(:index, new_index)
+        |> run()
 
       7 -> # less than => a < b 
         {param1, param2, param3} = get_val_val_pos(input, index, modes, relative_base)
         value = if param1 < param2, do: 1, else: 0
 
-        Map.put(input, param3, value)
-        |> run(index + 4, param, outputs, relative_base, status)
+        state
+        |> Map.put(:instructions, Map.put(input, param3, value))
+        |> Map.put(:index, index + 4)
+        |> run()
 
       8 -> # equal => a == b => put 1/0 in c
         {param1, param2, param3} = get_val_val_pos(input, index, modes, relative_base)
         value = if param1 == param2, do: 1, else: 0
 
-        Map.put(input, param3, value)
-        |> run(index + 4, param, outputs, relative_base, status)
+        state
+        |> Map.put(:instructions, Map.put(input, param3, value))
+        |> Map.put(:index, index + 4)
+        |> run()
 
       9 -> # change relative_base 
         param1 = get_val(input, index, modes, relative_base)
 
-        run(input, index + 2, param, outputs, relative_base + param1, status)
+        state
+        |> Map.put(:index, index + 2)
+        |> Map.put(:relative_base, relative_base + param1)
+        |> run()
 
       99 ->
         state
