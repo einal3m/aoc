@@ -46,88 +46,107 @@ defmodule AdventOfCode.IntCode do
     end
   end
 
-  def run(state = %IntCode{int_code: int_code, index: index, inputs: inputs, outputs: outputs, relative_base: relative_base, status: _status}) do
-    {code, modes} = parse_code(Map.get(int_code, index))
-    
-    case code do
-      1 -> # a + b => c
-        {param1, param2, param3} = get_val_val_pos(int_code, index, modes, relative_base)
+  def run(state = %IntCode{int_code: int_code, index: index}) do
+    Map.get(int_code, index)
+    |> parse_code()
+    |> process_code(state)
+  end    
 
-        state
-        |> Map.put(:int_code, Map.put(int_code, param3, param1 + param2))
-        |> Map.put(:index, index + 4)
-        |> run()
+  # a + b => c
+  def process_code({1, modes}, state = %IntCode{int_code: int_code, index: index, relative_base: relative_base}) do
+    {param1, param2, param3} = get_val_val_pos(int_code, index, modes, relative_base)
 
-      2 -> # a * b => c
-        {param1, param2, param3} = get_val_val_pos(int_code, index, modes, relative_base)
+    state
+    |> Map.put(:int_code, Map.put(int_code, param3, param1 + param2))
+    |> Map.put(:index, index + 4)
+    |> run()
+  end
 
-        state
-        |> Map.put(:int_code, Map.put(int_code, param3, param1 * param2))
-        |> Map.put(:index, index + 4)
-        |> run()
+  # a * b => c
+  def process_code({2, modes}, state = %IntCode{int_code: int_code, index: index, relative_base: relative_base}) do
+    {param1, param2, param3} = get_val_val_pos(int_code, index, modes, relative_base)
 
-      3 -> # input => a
-        param1 = get_pos(int_code, index, modes, relative_base)
+    state
+    |> Map.put(:int_code, Map.put(int_code, param3, param1 * param2))
+    |> Map.put(:index, index + 4)
+    |> run()
+  end
 
-        state
-        |> Map.put(:int_code, Map.put(int_code, param1, hd(inputs)))
-        |> Map.put(:inputs, tl(inputs))
-        |> Map.put(:index, index + 2)
-        |> run()
+  # input => a
+  def process_code({3, modes}, state = %IntCode{int_code: int_code, index: index, inputs: inputs, relative_base: relative_base}) do
+    param1 = get_pos(int_code, index, modes, relative_base)
 
-      4 -> # output => a
-        param1 = get_val(int_code, index, modes, relative_base)
+    state
+    |> Map.put(:int_code, Map.put(int_code, param1, hd(inputs)))
+    |> Map.put(:inputs, tl(inputs))
+    |> Map.put(:index, index + 2)
+    |> run()
+  end
 
-        state
-        |> Map.put(:outputs, outputs ++ [param1])
-        |> Map.put(:index, index + 2)
+  # output => a
+  def process_code({4, modes}, state = %IntCode{int_code: int_code, index: index, outputs: outputs, relative_base: relative_base}) do
+    param1 = get_val(int_code, index, modes, relative_base)
 
-      5 -> # jump if true
-        {param1, param2} = get_val_val(int_code, index, modes, relative_base)
-        new_index = if param1 != 0, do: param2, else: index + 3
+    state
+    |> Map.put(:outputs, outputs ++ [param1])
+    |> Map.put(:index, index + 2)
+  end
 
-        state
-        |> Map.put(:index, new_index)
-        |> run()
+  # jump if true
+  def process_code({5, modes}, state = %IntCode{int_code: int_code, index: index, relative_base: relative_base}) do
+    {param1, param2} = get_val_val(int_code, index, modes, relative_base)
+    new_index = if param1 != 0, do: param2, else: index + 3
 
-      6 -> # jump if false
-        {param1, param2} = get_val_val(int_code, index, modes, relative_base)
-        new_index = if param1 == 0, do: param2, else: index + 3
+    state
+    |> Map.put(:index, new_index)
+    |> run()
+  end
 
-        state
-        |> Map.put(:index, new_index)
-        |> run()
+  # jump if false
+  def process_code({6, modes}, state = %IntCode{int_code: int_code, index: index, relative_base: relative_base}) do
+    {param1, param2} = get_val_val(int_code, index, modes, relative_base)
+    new_index = if param1 == 0, do: param2, else: index + 3
 
-      7 -> # less than => a < b 
-        {param1, param2, param3} = get_val_val_pos(int_code, index, modes, relative_base)
-        value = if param1 < param2, do: 1, else: 0
+    state
+    |> Map.put(:index, new_index)
+    |> run()
+  end
 
-        state
-        |> Map.put(:int_code, Map.put(int_code, param3, value))
-        |> Map.put(:index, index + 4)
-        |> run()
+  # less than => a < b
+  def process_code({7, modes}, state = %IntCode{int_code: int_code, index: index, relative_base: relative_base}) do
+    {param1, param2, param3} = get_val_val_pos(int_code, index, modes, relative_base)
+    value = if param1 < param2, do: 1, else: 0
 
-      8 -> # equal => a == b => put 1/0 in c
-        {param1, param2, param3} = get_val_val_pos(int_code, index, modes, relative_base)
-        value = if param1 == param2, do: 1, else: 0
+    state
+    |> Map.put(:int_code, Map.put(int_code, param3, value))
+    |> Map.put(:index, index + 4)
+    |> run()
+  end
 
-        state
-        |> Map.put(:int_code, Map.put(int_code, param3, value))
-        |> Map.put(:index, index + 4)
-        |> run()
+  # equal => a == b => put 1/0 in c
+  def process_code({8, modes}, state = %IntCode{int_code: int_code, index: index, relative_base: relative_base}) do
+    {param1, param2, param3} = get_val_val_pos(int_code, index, modes, relative_base)
+    value = if param1 == param2, do: 1, else: 0
 
-      9 -> # change relative_base 
-        param1 = get_val(int_code, index, modes, relative_base)
+    state
+    |> Map.put(:int_code, Map.put(int_code, param3, value))
+    |> Map.put(:index, index + 4)
+    |> run()
+  end
 
-        state
-        |> Map.put(:index, index + 2)
-        |> Map.put(:relative_base, relative_base + param1)
-        |> run()
+  # change relative_base
+  def process_code({9, modes}, state = %IntCode{int_code: int_code, index: index, relative_base: relative_base}) do
+    param1 = get_val(int_code, index, modes, relative_base)
 
-      99 ->
-        state
-        |> Map.put(:status, :finished)
-    end
+    state
+    |> Map.put(:index, index + 2)
+    |> Map.put(:relative_base, relative_base + param1)
+    |> run()
+  end
+
+  def process_code({99, _}, state = %IntCode{}) do
+    state
+    |> Map.put(:status, :finished)
   end
 
   def get_val_val_pos(int_code, index, modes, relative_base) do
