@@ -1,6 +1,6 @@
 defmodule AdventOfCode.IntCode do
   alias AdventOfCode.IntCode
-  defstruct int_code: %{}, index: 0, params: [], outputs: [], relative_base: 0, status: :running
+  defstruct int_code: %{}, index: 0, inputs: [], outputs: [], relative_base: 0, status: :running
 
   def initialize_int_code(instructions) do
     instructions
@@ -12,7 +12,7 @@ defmodule AdventOfCode.IntCode do
     %IntCode{
       int_code: int_code,
       index: 0,
-      params: inputs,
+      inputs: inputs,
       outputs: [],
       relative_base: 0,
       status: :running
@@ -29,7 +29,7 @@ defmodule AdventOfCode.IntCode do
     %IntCode{
       int_code: int_code,
       index: 0,
-      params: inputs,
+      inputs: inputs,
       outputs: [],
       relative_base: 0,
       status: :running
@@ -46,7 +46,7 @@ defmodule AdventOfCode.IntCode do
     end
   end
 
-  def run(state = %IntCode{int_code: int_code, index: index, params: param, outputs: outputs, relative_base: relative_base, status: status}) do
+  def run(state = %IntCode{int_code: int_code, index: index, inputs: inputs, outputs: outputs, relative_base: relative_base, status: _status}) do
     {code, modes} = parse_code(Map.get(int_code, index))
     
     case code do
@@ -70,8 +70,8 @@ defmodule AdventOfCode.IntCode do
         param1 = get_pos(int_code, index, modes, relative_base)
 
         state
-        |> Map.put(:int_code, Map.put(int_code, param1, hd(param)))
-        |> Map.put(:params, tl(param))
+        |> Map.put(:int_code, Map.put(int_code, param1, hd(inputs)))
+        |> Map.put(:inputs, tl(inputs))
         |> Map.put(:index, index + 2)
         |> run()
 
@@ -185,13 +185,13 @@ defmodule AdventOfCode.IntCode do
     case actual_code == 99 do 
       true -> { 99, [] }
       false ->
-        params = Enum.drop(digits, -2) 
+        modes = Enum.drop(digits, -2) 
           |> Enum.join("") 
           |> String.pad_leading(param_counts(actual_code), "0") 
           |> String.graphemes
           |> Enum.map(fn x -> String.to_integer(x) end)
 
-        { actual_code, params }
+        { actual_code, modes }
     end
   end
 

@@ -59,7 +59,7 @@ defmodule AdventOfCode.Day11 do
 
     state = 
       state
-      |> Map.put(:params, [current_colour])
+      |> Map.put(:inputs, [current_colour])
       |> Map.put(:outputs, [])
       |> AdventOfCode.IntCode.run_until_output()
       |> AdventOfCode.IntCode.run_until_output()
