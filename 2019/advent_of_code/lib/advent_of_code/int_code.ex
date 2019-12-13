@@ -25,6 +25,16 @@ defmodule AdventOfCode.IntCode do
     run(state)
   end
 
+  def run_until_input(state = %IntCode{}) do
+    new_state = run(state)
+
+    case new_state.status do
+      :running -> run_until_input(new_state)
+      :waiting -> new_state
+      :finished -> new_state
+    end
+  end
+
   def run_until_done(int_code, inputs) do
     %IntCode{
       int_code: int_code,
@@ -42,6 +52,7 @@ defmodule AdventOfCode.IntCode do
 
     case new_state.status do
       :running -> run_until_done(new_state)
+      :waiting -> run_until_done(new_state)
       :finished -> new_state
     end
   end
@@ -74,13 +85,19 @@ defmodule AdventOfCode.IntCode do
 
   # input => a
   def process_code({3, modes}, state = %IntCode{int_code: int_code, index: index, inputs: inputs, relative_base: relative_base}) do
-    param1 = get_pos(int_code, index, modes, relative_base)
+    case length(inputs) > 0 do
+      true ->
+        param1 = get_pos(int_code, index, modes, relative_base)
 
-    state
-    |> Map.put(:int_code, Map.put(int_code, param1, hd(inputs)))
-    |> Map.put(:inputs, tl(inputs))
-    |> Map.put(:index, index + 2)
-    |> run()
+        state
+        |> Map.put(:int_code, Map.put(int_code, param1, hd(inputs)))
+        |> Map.put(:inputs, tl(inputs))
+        |> Map.put(:index, index + 2)
+        |> run()
+      false ->  
+        state
+        |> Map.put(:status, :waiting)
+    end
   end
 
   # output => a
@@ -149,18 +166,18 @@ defmodule AdventOfCode.IntCode do
     |> Map.put(:status, :finished)
   end
 
-  def get_val_val_pos(int_code, index, modes, relative_base) do
-    param1 = case Enum.at(modes, 2) do
+  def get_val_val_pos(int_code, index, [mode3, mode2, mode1], relative_base) do
+    param1 = case mode1 do
       0 -> Map.get(int_code, Map.get(int_code, index + 1), 0)
       1 -> Map.get(int_code, index + 1)
       2 -> Map.get(int_code, Map.get(int_code, index+1) + relative_base, 0)
     end
-    param2 = case Enum.at(modes, 1) do
+    param2 = case mode2 do
       0 -> Map.get(int_code, Map.get(int_code, index + 2), 0)
       1 -> Map.get(int_code, index + 2)
       2 -> Map.get(int_code, Map.get(int_code, index+2) + relative_base, 0)
     end
-    param3 = case Enum.at(modes, 0) do
+    param3 = case mode3 do
       0 -> Map.get(int_code, index + 3)
       2 -> Map.get(int_code, index + 3) + relative_base
     end
@@ -168,13 +185,13 @@ defmodule AdventOfCode.IntCode do
     {param1, param2, param3}
   end
 
-  def get_val_val(int_code, index, modes, relative_base) do
-    param1 = case Enum.at(modes, 1) do
+  def get_val_val(int_code, index, [mode2, mode1], relative_base) do
+    param1 = case mode1 do
       0 -> Map.get(int_code, Map.get(int_code, index + 1), 0)
       1 -> Map.get(int_code, index + 1)
       2 -> Map.get(int_code, Map.get(int_code, index+1) + relative_base, 0)
     end
-    param2 = case Enum.at(modes, 0) do
+    param2 = case mode2 do
       0 -> Map.get(int_code, Map.get(int_code, index + 2), 0)
       1 -> Map.get(int_code, index + 2)
       2 -> Map.get(int_code, Map.get(int_code, index+2) + relative_base, 0)
@@ -182,16 +199,16 @@ defmodule AdventOfCode.IntCode do
     {param1, param2}    
   end
 
-  def get_val(int_code, index, modes, relative_base) do
-    case Enum.at(modes, 0) do
+  def get_val(int_code, index, [mode], relative_base) do
+    case mode do
       0 -> Map.get(int_code, Map.get(int_code, index + 1), 0)
       1 -> Map.get(int_code, index + 1)
       2 -> Map.get(int_code, Map.get(int_code, index + 1) + relative_base, 0)
     end    
   end
 
-  def get_pos(int_code, index, modes, relative_base) do
-    case Enum.at(modes, 0) do
+  def get_pos(int_code, index, [mode], relative_base) do
+    case mode do
       0 -> Map.get(int_code, index + 1)
       2 -> Map.get(int_code, index + 1) + relative_base
     end      
